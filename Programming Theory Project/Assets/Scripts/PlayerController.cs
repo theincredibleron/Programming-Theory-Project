@@ -14,8 +14,10 @@ public class PlayerController : MonoBehaviour
 
     // Update is called once per frame
     // ToDo: change key z to y before publishing!!!
-    void Update()
+    void LateUpdate()
     {
+        if (m_CubeController.RotationOngoing) return;
+        
         if (Input.GetKeyDown(KeyCode.R)) {
             m_CubeController.RotatePlane(Vector3.left, Direction.CCW);
         } else if (Input.GetKeyDown(KeyCode.F)) {

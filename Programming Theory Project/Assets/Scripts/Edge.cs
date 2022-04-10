@@ -1,7 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
 public class Edge : Reparenting
 {
     void Awake()
@@ -10,8 +6,8 @@ public class Edge : Reparenting
     }
 
     private void OnTransformParentChanged() {
-         RotationParent = transform.parent.gameObject;
-         
-         ReparentAdjacent("Corner");
+        RotationParent = transform.parent.gameObject;
+        //if (RotationParent != null && RotationParent.GetComponent<Plane>().IsRotating) return;
+        ReparentAdjacent("Corner");
     }
 }

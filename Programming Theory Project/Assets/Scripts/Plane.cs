@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public partial class Plane : Reparenting
@@ -7,51 +6,41 @@ public partial class Plane : Reparenting
     float m_FixedAngle = 90.0f;
     float m_CurrentAngle = 0f;
     Quaternion m_TargetRotation;
-    float m_RotationSpeed = 5.0f;
-    [SerializeField] bool m_IsRotating = false;
+    float m_RotationSpeed = 3.0f;
+    [SerializeField] public bool IsRotating { get; protected set; }
     public Vector3 RotationAxis;
     [SerializeField] Direction m_RotationDirection;
-    
+
     virtual protected void Awake()
     {
         m_SphereRadius = 0.6f;
-        RotationParent = gameObject;
     }
 
-    // Update is called once per frame
-    virtual protected void Update()
-    {
-        if (m_IsRotating && RotationAxis != null) {
-            if (m_CurrentAngle < m_FixedAngle) {
-                float step = m_RotationSpeed;// * Time.deltaTime;
-                m_CurrentAngle += step;
-                transform.Rotate(RotationAxis, ((int)m_RotationDirection) * step);
-            } else {
-                // to "snap-in" properly assign calculated target rotation
-                transform.rotation = m_TargetRotation;
-                // stop animation
-                m_IsRotating = false;
-                m_CurrentAngle = 0;
-                OnRotationFinished();
-            }
-        }
-    }
-
-    void OnRotationFinished()
-    { 
-        
-    }
-
-    public void Rotate(Direction direction)
+    public IEnumerator Rotate(Direction direction)
     {
         // exit early if already rotating...
-        if (m_IsRotating) return;
-
+        if (IsRotating) yield return null;
+        
+        RotationParent = gameObject;
         ReparentAdjacent("Edge");
+        IsRotating = true;
         Transform tempTransform = transform;
         tempTransform.Rotate(RotationAxis, m_FixedAngle * ((int)direction));
         m_TargetRotation = tempTransform.rotation;
         m_RotationDirection = direction;
-        m_IsRotating = true;
+
+        float step = Time.deltaTime * m_RotationSpeed * m_FixedAngle * ((int)direction);
+        for (float i = 0.0f; Mathf.Abs(i) < m_FixedAngle; i += step) {
+            transform.Rotate(RotationAxis, step);
+            yield return null;
+        }
+        
+        // to "snap-in" properly assign calculated target rotation
+        transform.rotation = m_TargetRotation;
+        // reparent children to cube
+        RotationParent = null;
+        ReparentAdjacent("Edge");
+        // stop animation
+        IsRotating = false;
     }
 }
