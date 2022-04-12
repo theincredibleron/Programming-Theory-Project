@@ -1,20 +1,16 @@
 using System.Collections;
 using UnityEngine;
 
-public class Plane : MonoBehaviour
+public class Plane : NotifyingFinishBehavior
 {
     float m_FixedAngle = 90.0f;
     Quaternion m_TargetRotation;
-    float m_RotationSpeed = 2.0f;
+    float m_RotationSpeed = 3.0f;
     [SerializeField] public bool IsRotating { get; protected set; }
     public Vector3 RotationAxis;
     [SerializeField] Direction m_RotationDirection;
     [SerializeField] Vector3 m_OverlapBox = new Vector3(3, 1, 3) / 3;
     Collider[] m_AdjacentColliders;
-
-    public delegate void OnPlaneRotationFinished(Plane sender);
-
-    public event OnPlaneRotationFinished RotationFinished;
 
     public IEnumerator Rotate(Direction direction)
     {
@@ -40,7 +36,7 @@ public class Plane : MonoBehaviour
         ReparentAdjacent(null);
         // stop animation
         IsRotating = false;
-        RotationFinished?.Invoke(this);
+        InvokeEvent(this.gameObject, "Rotation");
     }
 
     void ReparentAdjacent(Transform parent)

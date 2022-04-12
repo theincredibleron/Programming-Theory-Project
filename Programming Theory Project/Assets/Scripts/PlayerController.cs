@@ -5,7 +5,7 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour
 {
     [SerializeField] CubeController m_CubeController;
-    
+    [SerializeField] float horizontalSpeed, verticalSpeed;    
     // Start is called before the first frame update
     void Start()
     {
@@ -16,6 +16,11 @@ public class PlayerController : MonoBehaviour
     // ToDo: change key z to y before publishing!!!
     void LateUpdate()
     {
+        float horizontal = Input.GetAxis("Horizontal");
+        float vertical = Input.GetAxis("Vertical");
+        if (horizontal != 0f || vertical != 0f)
+            Rotate(horizontal, vertical);
+
         if (m_CubeController.RotationOngoing) return;
         
         if (Input.GetKeyDown(KeyCode.R)) {
@@ -43,5 +48,22 @@ public class PlayerController : MonoBehaviour
         } else if (Input.GetKeyDown(KeyCode.M)) {
             m_CubeController.RotatePlane(Vector3.back, Direction.CW);
         }
+    }
+
+    void Update()
+    {
+        if (Mathf.Abs(horizontalSpeed) > 0.1f)
+            transform.RotateAround(m_CubeController.transform.position, 
+                Vector3.up, horizontalSpeed * 360f * Time.deltaTime);    
+        if (Mathf.Abs(verticalSpeed) > 0.1f)
+            transform.RotateAround(m_CubeController.transform.position, 
+                Vector3.right, verticalSpeed * 360f *  Time.deltaTime);    
+
+    }
+
+    public void Rotate(float horizontal, float vertical)
+    {
+        horizontalSpeed = horizontal;
+        verticalSpeed = vertical;
     }
 }
