@@ -5,45 +5,58 @@ public class Plane : MonoBehaviour
 {
     float m_FixedAngle = 90.0f;
     Quaternion m_TargetRotation;
-    float m_RotationSpeed = 3.0f;
+    float m_RotationSpeed = 2.0f;
     [SerializeField] public bool IsRotating { get; protected set; }
     public Vector3 RotationAxis;
     [SerializeField] Direction m_RotationDirection;
     [SerializeField] Vector3 m_OverlapBox = new Vector3(3, 1, 3) / 3;
+    Collider[] m_AdjacentColliders;
+
+    public delegate void OnPlaneRotationFinished(Plane sender);
+
+    public event OnPlaneRotationFinished RotationFinished;
 
     public IEnumerator Rotate(Direction direction)
     {
         // exit early if already rotating...
-        if (IsRotating) yield return null;
+        if (IsRotating) yield break;
+        IsRotating = true;
         // reparent all plane pieces to this transform
         ReparentAdjacent(gameObject.transform);
-        IsRotating = true;
-        Transform tempTransform = transform;
-        tempTransform.Rotate(RotationAxis, m_FixedAngle * ((int)direction));
-        m_TargetRotation = tempTransform.rotation;
+        // create target rotation for later snap-in
+        int directionInt = ((int)direction);
+        m_TargetRotation = transform.rotation * Quaternion.AngleAxis(m_FixedAngle * directionInt, RotationAxis);
         m_RotationDirection = direction;
 
-        float step = Time.deltaTime * m_RotationSpeed * m_FixedAngle * ((int)direction);
-        for (float i = 0.0f; Mathf.Abs(i) < m_FixedAngle; i += step) {
-            transform.Rotate(RotationAxis, step);
+        float step = m_FixedAngle * Time.deltaTime * m_RotationSpeed;
+        for (float i = 0.0f; i < m_FixedAngle; i += step) {
+            transform.Rotate(RotationAxis, step * directionInt);
             yield return null;
         }
         
-        // to "snap-in" properly assign calculated target rotation
+        // to "snap-in" properly assign previously calculated target rotation
         transform.rotation = m_TargetRotation;
         // reparent children to cube
-        ReparentAdjacent(transform.parent);
+        ReparentAdjacent(null);
         // stop animation
         IsRotating = false;
+        RotationFinished?.Invoke(this);
     }
 
     void ReparentAdjacent(Transform parent)
     {
-        Collider[] adjacentColliders = Physics.OverlapBox(transform.position, 
+        // reparent to plane's parent if argument is null
+        if (parent == null) {
+            foreach (Collider adjacent in m_AdjacentColliders)
+                adjacent.gameObject.transform.parent = transform.parent;
+            return;
+        }
+
+        m_AdjacentColliders = Physics.OverlapBox(transform.position, 
             m_OverlapBox, 
             transform.rotation * Quaternion.FromToRotation(Vector3.up, RotationAxis));
 
-        foreach (Collider adjacent in adjacentColliders) { 
+        foreach (Collider adjacent in m_AdjacentColliders) { 
             if (adjacent.gameObject == gameObject) continue;
             if (!tag.Equals("Center")) {
                 adjacent.gameObject.transform.SetParent(transform);

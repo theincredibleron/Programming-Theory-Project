@@ -16,6 +16,7 @@ public class CubeController : MonoBehaviour
             if (m_Planes.Count == 6) return;
             
             Plane planeScript = childTransform.gameObject.GetComponent<Plane>();
+            planeScript.RotationFinished += OnPlaneRotationFinished;
             m_Planes.Add(
                 planeScript.RotationAxis,
                 childTransform.gameObject);
@@ -24,9 +25,15 @@ public class CubeController : MonoBehaviour
 
     public void RotatePlane(Vector3 planeAxis, Direction direction)
     {   
+        if (RotationOngoing) return;
         Plane planeScript = m_Planes[planeAxis].GetComponent<Plane>();
-        if (planeScript.IsRotating) return;
-        
         StartCoroutine(planeScript.Rotate(direction));
+        RotationOngoing = true;
+    }
+
+    void OnPlaneRotationFinished(Plane sender)
+    {
+        RotationOngoing = sender.IsRotating;
+        Debug.Log( sender.gameObject.name + " has finished rotation. IsRotation: " + sender.IsRotating);
     }
 }
