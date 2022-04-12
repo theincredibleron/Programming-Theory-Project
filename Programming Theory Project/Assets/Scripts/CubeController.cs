@@ -16,6 +16,7 @@ public class CubeController : MonoBehaviour
             if (m_Planes.Count == 6) return;
             
             Plane planeScript = childTransform.gameObject.GetComponent<Plane>();
+            // add coroutine finish event handler
             planeScript.RotationFinished += OnPlaneRotationFinished;
             m_Planes.Add(
                 planeScript.RotationAxis,
@@ -34,6 +35,5 @@ public class CubeController : MonoBehaviour
     void OnPlaneRotationFinished(Plane sender)
     {
         RotationOngoing = sender.IsRotating;
-        Debug.Log( sender.gameObject.name + " has finished rotation. IsRotation: " + sender.IsRotating);
     }
 }
