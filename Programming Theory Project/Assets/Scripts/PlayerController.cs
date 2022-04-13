@@ -5,11 +5,16 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour
 {
     [SerializeField] CubeController m_CubeController;
-    [SerializeField] float horizontalSpeed, verticalSpeed;    
+    [SerializeField] float horizontalSpeed, verticalSpeed;
+    bool m_AnyKeyDown = false;
+    OrientationHelper m_OrientationHelper;
+
+
     // Start is called before the first frame update
-    void Start()
+    void Awake()
     {
         m_CubeController = GameObject.Find("Cube").GetComponent<CubeController>();
+        m_OrientationHelper = GameObject.Find("OrientationHelper").GetComponent<OrientationHelper>();
     }
 
     // Update is called once per frame
@@ -18,35 +23,23 @@ public class PlayerController : MonoBehaviour
     {
         float horizontal = Input.GetAxis("Horizontal");
         float vertical = Input.GetAxis("Vertical");
-        if (horizontal != 0f || vertical != 0f)
+        if (horizontal != 0f || vertical != 0f) {
             Rotate(horizontal, vertical);
+        }
+        
+        if (!Input.anyKeyDown && m_AnyKeyDown) {
+            m_OrientationHelper.CheckOrientation();
+            m_AnyKeyDown = false;
+        } else m_AnyKeyDown = Input.anyKeyDown;
 
         if (m_CubeController.RotationOngoing) return;
         
-        if (Input.GetKeyDown(KeyCode.R)) {
-            m_CubeController.RotatePlane(Vector3.left, Direction.CCW);
-        } else if (Input.GetKeyDown(KeyCode.F)) {
-            m_CubeController.RotatePlane(Vector3.left, Direction.CW);
-        } else if (Input.GetKeyDown(KeyCode.T)) {
-            m_CubeController.RotatePlane(Vector3.up, Direction.CW);
-        } else if (Input.GetKeyDown(KeyCode.Z)) {
-            m_CubeController.RotatePlane(Vector3.up, Direction.CCW);
-        } else if (Input.GetKeyDown(KeyCode.U)) {
-            m_CubeController.RotatePlane(Vector3.right, Direction.CW);
-        } else if (Input.GetKeyDown(KeyCode.J)) {
-            m_CubeController.RotatePlane(Vector3.right, Direction.CCW);
-        } else if (Input.GetKeyDown(KeyCode.G)) {
-            m_CubeController.RotatePlane(Vector3.down, Direction.CCW);
-        } else if (Input.GetKeyDown(KeyCode.H)) {
-            m_CubeController.RotatePlane(Vector3.down, Direction.CW);
-        } else if (Input.GetKeyDown(KeyCode.V)) {
-            m_CubeController.RotatePlane(Vector3.forward, Direction.CW);
-        } else if (Input.GetKeyDown(KeyCode.B)) {
-            m_CubeController.RotatePlane(Vector3.forward, Direction.CCW);
-        } else if (Input.GetKeyDown(KeyCode.N)) {
-            m_CubeController.RotatePlane(Vector3.back, Direction.CCW);
-        } else if (Input.GetKeyDown(KeyCode.M)) {
-            m_CubeController.RotatePlane(Vector3.back, Direction.CW);
+        foreach (KeyValuePair<KeyCode, GameManager.PlaneDescriptor> entry 
+            in GameManager.Instance.KeyMap) {
+            if (Input.GetKeyDown(entry.Key)) {
+                m_CubeController.RotatePlane(entry.Value.Orientation, entry.Value.RotationDirection);
+                break;
+            }
         }
     }
 
