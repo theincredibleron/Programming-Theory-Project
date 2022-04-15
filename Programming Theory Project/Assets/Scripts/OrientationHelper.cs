@@ -14,12 +14,18 @@ public class OrientationHelper : MonoBehaviour
         m_AxisMapping.Add(Vector3.forward, Vector3.forward);
     }
 
-    public void CheckOrientation()
+    public void UpdateOrientation()
     {
         m_AxisMapping[Vector3.right] = GetCurrentTargetAxis(Vector3.right, gameObject.transform.right);
         m_AxisMapping[Vector3.up] = GetCurrentTargetAxis(Vector3.up, gameObject.transform.up);
         m_AxisMapping[Vector3.forward] = GetCurrentTargetAxis(Vector3.forward, gameObject.transform.forward);
         Debug.Log(this);
+    }
+
+    public Vector3 GetCurrentOrientation(Vector3 input)
+    {
+        float invFactor = Vector3.Dot(Vector3.one, input);
+        return m_AxisMapping[input * invFactor] * invFactor;
     }
 
     Vector3 GetCurrentTargetAxis(Vector3 axisToMap, Vector3 input)

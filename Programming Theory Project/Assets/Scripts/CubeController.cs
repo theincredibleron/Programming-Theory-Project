@@ -26,7 +26,10 @@ public class CubeController : MonoBehaviour
 
     public void RotatePlane(Vector3 planeAxis, Direction direction)
     {   
-        if (RotationOngoing) return;
+        if (RotationOngoing) {
+            Debug.Log("Skipping RotatPlane request..."); Debug.Break();
+            return;
+        }
         Plane planeScript = m_Planes[planeAxis].GetComponent<Plane>();
         StartCoroutine(planeScript.Rotate(direction));
         RotationOngoing = true;

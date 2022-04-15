@@ -5,11 +5,11 @@ public class Plane : NotifyingFinishBehavior
 {
     float m_FixedAngle = 90.0f;
     Quaternion m_TargetRotation;
-    float m_RotationSpeed = 3.0f;
+    float m_RotationSpeed = 4.0f;
     [SerializeField] public bool IsRotating { get; protected set; }
     public Vector3 RotationAxis;
     [SerializeField] Direction m_RotationDirection;
-    [SerializeField] Vector3 m_OverlapBox = new Vector3(3, 1, 3) / 3;
+    [SerializeField] Vector3 m_OverlapBox = new Vector3(1.1f, 0.3f, 1.1f);
     Collider[] m_AdjacentColliders;
 
     public IEnumerator Rotate(Direction direction)

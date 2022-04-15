@@ -62,7 +62,7 @@ public class GameManager : MonoBehaviour
         foreach (KeyValuePair<KeyCode, PlaneDescriptor> entry in KeyMap) {
             mapping.SetKeyCode(entry.Value, entry.Key);
         }
-        string mappingJson = JsonUtility.ToJson(mapping);
+        string mappingJson = JsonUtility.ToJson(mapping, true);
         File.WriteAllText(m_ConfigFilePath, mappingJson);
     }
 
@@ -147,9 +147,12 @@ public class GameManager : MonoBehaviour
             else
                 prefix = "";
             string dirString = planeDescriptor.RotationDirection.ToString();
-            PropertyInfo info = GetType().GetProperty(prefix + dirString);
-            if (info != null)
-                info.SetValue(this, keyCode.ToString());
+            MemberInfo[] infos = GetType().GetMember(prefix + dirString);
+            foreach (MemberInfo info in infos) {
+                if(info.MemberType != MemberTypes.Field) continue;
+                FieldInfo fieldInfo = (FieldInfo)info;
+                fieldInfo.SetValue(this, keyCode.ToString());
+            }
         }
 
         string GetPropertyName(string keyCode) {
