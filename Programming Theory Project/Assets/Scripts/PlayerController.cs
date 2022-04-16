@@ -13,8 +13,6 @@ public class PlayerController : MonoBehaviour
     Dictionary<Vector3, Vector3> m_ControlsOrientation;
     public InputField ScriptInput;
 
-
-    // Start is called before the first frame update
     void Awake()
     {
         m_CubeController = GameObject.Find("Cube").GetComponent<CubeController>();
@@ -28,6 +26,7 @@ public class PlayerController : MonoBehaviour
         };
     }
 
+    #region script playing
     public void RunScript()
     {
         m_ScriptCommands = new Queue<CubeScript.CommandContext>();
@@ -38,29 +37,9 @@ public class PlayerController : MonoBehaviour
         cubeScript.Parse(script);
     }
 
-    public void OnCommandComplete(CubeScript.CommandContext context)
+    // ABSTRACTION
+    void ExecuteScriptCommand()
     {
-        m_ScriptCommands.Enqueue(context);        
-    } 
-
-    void LateUpdate()
-    {
-        // skip input processing if control is pressed
-        if (Input.GetKey(KeyCode.LeftControl) || ScriptInput.isFocused) return;
-
-        float horizontal = Input.GetAxis("Horizontal");
-        float vertical = Input.GetAxis("Vertical");
-        if (horizontal != 0f || vertical != 0f) {
-            Rotate(horizontal, vertical);
-        }
-        
-        if (!Input.anyKeyDown && m_AnyKeyDown) {
-            RemapControlsOrientation();
-            m_AnyKeyDown = false;
-        } else m_AnyKeyDown = Input.anyKeyDown;
-
-        if (m_CubeController.RotationOngoing) return;
-        
         // process script command queue
         if(m_ScriptCommands != null && m_ScriptCommands.Count > 0) {
             m_IsOrientationLocked = true;
@@ -70,7 +49,39 @@ public class PlayerController : MonoBehaviour
             m_IsOrientationLocked = false;
             ScriptInput.interactable = true;
         }
+    }
 
+    public void OnCommandComplete(CubeScript.CommandContext context)
+    {
+        m_ScriptCommands.Enqueue(context);        
+    } 
+    #endregion
+    void LateUpdate()
+    {
+        // skip input processing if control is pressed
+        if (Input.GetKey(KeyCode.LeftControl) || ScriptInput.isFocused) return;
+
+        SetViewRotationInputs();
+        
+        if (!Input.anyKeyDown && m_AnyKeyDown) {
+            RemapControlsOrientation();
+            m_AnyKeyDown = false;
+        } else m_AnyKeyDown = Input.anyKeyDown;
+
+        if (m_CubeController.RotationOngoing) return;
+
+        ExecuteScriptCommand();
+        RotatePlane();
+    }
+
+    void Update()
+    {
+        RotateView();
+    }
+
+    // ABSTRACTION
+    void RotatePlane()
+    {
         foreach (KeyValuePair<KeyCode, GameManager.PlaneDescriptor> entry 
             in GameManager.Instance.KeyMap) {
             if (Input.GetKeyDown(entry.Key)) {
@@ -82,7 +93,8 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    void Update()
+    // ABSTRACTION
+    void RotateView()
     {
         if (Mathf.Abs(horizontalSpeed) > 0.1f)
             transform.RotateAround(m_CubeController.transform.position, 
@@ -90,26 +102,34 @@ public class PlayerController : MonoBehaviour
         if (Mathf.Abs(verticalSpeed) > 0.1f)
             transform.RotateAround(m_CubeController.transform.position, 
                 Vector3.right, verticalSpeed * 360f *  Time.deltaTime);    
-
     }
 
-    public void Rotate(float horizontal, float vertical)
+    // ABSTRACTION
+    public void SetViewRotationInputs()
     {
-        horizontalSpeed = horizontal;
-        verticalSpeed = vertical;
+        float horizontal = Input.GetAxis("Horizontal");
+        float vertical = Input.GetAxis("Vertical");
+        if (horizontal != 0f || vertical != 0f) {
+            horizontalSpeed = horizontal;
+            verticalSpeed = vertical;
+        }
     }
 
+    #region viewport to controls mapping
+    // ABSTRACTION
     Vector3 CheckCloseToReference(Vector3 refVector, Vector3 toCheck)
     {
         float dot = Vector3.Dot(refVector, toCheck);
         return Mathf.Abs(dot) > 0.6f ? refVector * Mathf.RoundToInt(dot) : Vector3.zero; 
     }
 
+    // ABSTRACTION
     Vector3 GetNonZero(Vector3 toCheck, Vector3 defaultVector)
     {
         return toCheck != Vector3.zero ? toCheck : defaultVector;
     }
 
+    // ABSTRACTION
     void RemapControlsOrientation()
     {
         // early return, if orientation must not be remapped, e.g. during script excecution
@@ -151,6 +171,10 @@ public class PlayerController : MonoBehaviour
         m_ControlsOrientation[Vector3.forward] = resForward;        
         m_ControlsOrientation[Vector3.back] = -resForward; 
     }
+    #endregion
+
+    #region visual debugging
+#if UNITY_EDITOR
     public bool DebugControlOrientation = false;
     private void OnDrawGizmos() {
         if (!DebugControlOrientation || m_ControlsOrientation == null) return;
@@ -178,9 +202,13 @@ public class PlayerController : MonoBehaviour
             color.g = dir.Key.y;
             color.b = dir.Key.z;
             color.a = 0.5f;
-
+            Vector3 scale = Vector3.one * (dir.Key == Vector3.right
+                || dir.Key == Vector3.forward
+                || dir.Key == Vector3.up ? 1 : 0.2f);
             Gizmos.color = color;
-            Gizmos.DrawMesh(mesh, -dir.Value * 3, Quaternion.FromToRotation(Vector3.up, dir.Value), Vector3.one);
+            Gizmos.DrawMesh(mesh, -dir.Value * 3, Quaternion.FromToRotation(Vector3.up, dir.Value), scale);
         }
     }
+#endif
+    #endregion
 }

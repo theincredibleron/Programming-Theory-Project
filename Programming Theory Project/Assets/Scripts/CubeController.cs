@@ -5,6 +5,7 @@ using System.IO;
 public class CubeController : MonoBehaviour
 {
     Dictionary<Vector3, GameObject> m_Planes = new Dictionary<Vector3, GameObject>(6);
+    // ENCAPSULATION
     public bool RotationOngoing { get; private set; }
     [SerializeField]
     public string SaveFile;
@@ -47,6 +48,8 @@ public class CubeController : MonoBehaviour
         }
     }
 
+    #region loading and saving cube state
+    // ABSTRACTION
     public void PersistCube()
     {
         CubeFormat cubeFormat = new CubeFormat{
@@ -76,6 +79,7 @@ public class CubeController : MonoBehaviour
         File.WriteAllText(SaveFile, json);
     }
 
+    // ABSTRACTION
     public void LoadCube()
     {
         if (!File.Exists(SaveFile)) return;
@@ -87,6 +91,7 @@ public class CubeController : MonoBehaviour
             child.eulerAngles = info.Rotation;
         }
     }
+    #endregion
 
     void OnActionFinished(GameObject sender, string actionName)
     {
@@ -94,6 +99,7 @@ public class CubeController : MonoBehaviour
             RotationOngoing = sender.GetComponent<Plane>().IsRotating;
     }
 
+    #region persistence classes
     [System.Serializable]
     public class CubeFormat
     {
@@ -117,4 +123,5 @@ public class CubeController : MonoBehaviour
         [SerializeField]
         public Vector3 Rotation;
     }
+    #endregion
 }

@@ -1,17 +1,20 @@
 using System.Collections;
 using UnityEngine;
 
+// INHERITANCE
 public class Plane : NotifyingFinishBehavior
 {
     float m_FixedAngle = 90.0f;
     Quaternion m_TargetRotation;
     float m_RotationSpeed = 4.0f;
+    // ENCAPSULATION
     [SerializeField] public bool IsRotating { get; protected set; }
     public Vector3 RotationAxis;
     [SerializeField] Direction m_RotationDirection;
     [SerializeField] Vector3 m_OverlapBox = new Vector3(1.1f, 0.3f, 1.1f);
     Collider[] m_AdjacentColliders;
 
+    // ABSTRACTION
     public IEnumerator Rotate(Direction direction)
     {
         // exit early if already rotating...
@@ -39,6 +42,7 @@ public class Plane : NotifyingFinishBehavior
         InvokeEvent(this.gameObject, "Rotation");
     }
 
+    // ABSTRACTION
     void ReparentAdjacent(Transform parent)
     {
         // reparent to plane's parent if argument is null
@@ -60,6 +64,8 @@ public class Plane : NotifyingFinishBehavior
         }
     }
 
+    #region visual debugging of the physics overlap boxes
+#if UNITY_EDITOR
     public bool overlapBoxDebug = false;
     private void OnDrawGizmos() {
         if (!overlapBoxDebug) return;
@@ -81,4 +87,6 @@ public class Plane : NotifyingFinishBehavior
         Gizmos.matrix *= Matrix4x4.Rotate(Quaternion.FromToRotation(Vector3.up, RotationAxis));
         Gizmos.DrawWireCube(Vector3.zero, m_OverlapBox * 2);
     }
+#endif
+    #endregion
 }

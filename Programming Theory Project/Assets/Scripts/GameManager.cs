@@ -10,7 +10,9 @@ using UnityEditor;
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
-    public Dictionary<KeyCode, PlaneDescriptor> KeyMap;
+    // ENCAPSULATION
+    public Dictionary<KeyCode, PlaneDescriptor> KeyMap { get; private set; }
+    public KeyMapping KeyMapData { get; private set; }
     public string m_ConfigFilePath;
     public CubeController cubeController;
 
@@ -28,6 +30,7 @@ public class GameManager : MonoBehaviour
     void OnApplicationQuit() {
         SaveKeymap();    
     }
+
     public void Quit() {
         cubeController.PersistCube();    
 #if UNITY_EDITOR        
@@ -37,6 +40,7 @@ public class GameManager : MonoBehaviour
 #endif
     }
 
+    #region loading and saving of keyboard mapping
     KeyCode ParseKeyCodeString(string toParse) { return (KeyCode)System.Enum.Parse(typeof(KeyCode), toParse); }
     void LoadKeymap()
     {   
@@ -46,13 +50,13 @@ public class GameManager : MonoBehaviour
             return;
         }
         string mapJson = File.ReadAllText(m_ConfigFilePath);
-        KeyMapping keyMapping = JsonUtility.FromJson<KeyMapping>(mapJson);
-        InitKeymap(keyMapping);
+        KeyMapData = JsonUtility.FromJson<KeyMapping>(mapJson);
+        InitKeymap(KeyMapData);
     }
 
     void InitDefaultKeymap()
     {
-        InitKeymap(new KeyMapping());
+        InitKeymap(KeyMapData);
     }
 
     void InitKeymap(KeyMapping mapping)
@@ -73,14 +77,15 @@ public class GameManager : MonoBehaviour
 
     void SaveKeymap()
     {
-        KeyMapping mapping = new KeyMapping();
         foreach (KeyValuePair<KeyCode, PlaneDescriptor> entry in KeyMap) {
-            mapping.SetKeyCode(entry.Value, entry.Key);
+            KeyMapData.SetKeyCode(entry.Value, entry.Key);
         }
-        string mappingJson = JsonUtility.ToJson(mapping, true);
+        string mappingJson = JsonUtility.ToJson(KeyMapData, true);
         File.WriteAllText(m_ConfigFilePath, mappingJson);
     }
+    #endregion
 
+    #region helper classes for keyboard mapping and persistence
     public class PlaneDescriptor {
         public Vector3 Orientation;
         public Direction RotationDirection;
@@ -112,7 +117,8 @@ public class GameManager : MonoBehaviour
         public string BackCW = "M";
         [SerializeField]
         public string BackCCW = "N";
-
+       
+        #region key configuration helper methods
         public PlaneDescriptor GetPlaneDescriptor(string keyCode)
         {
             string propertyName = GetPropertyName(keyCode);
@@ -182,5 +188,13 @@ public class GameManager : MonoBehaviour
 
             return "";
         }
+         #endregion
+
+        // POLYMORHISM
+        override public string ToString()
+        {
+            return $"How to control the cube\nPlane\t\tCW\tCCW\ntop\t\t{UpCW}\t{UpCCW}\nright\t\t{RightCW}\t{RightCCW}\nbottom\t{DownCW}\t{DownCCW}\nleft\t\t{LeftCW}\t{LeftCCW}\nfront\t\t{ForwardCW}\t{ForwardCCW}\nback\t\t{BackCW}\t{BackCCW}";
+        }
     }
+    #endregion
 }

@@ -1,24 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+// ABSTRACTION
 public class CubeScript
 {
-    /*
-        R, R': Turn right plane CW or CCW -> Vector3.right
-        L, L': Turn left plane CW or CCW -> Vector3.left
-        U, U': Turn top plane CW or CCW -> Vector3.up
-        D, D': Turn bottom plane CW or CCW -> Vector3.down
-        F, F': Turn front plane CW or CCW -> Vector3.back
-        B, B': Turn back plane CW or CCW -> Vector3.forward
-
-        Turns notated with a additional "2" means doing turn twice, e.g. 
-        U2 -> turn top plane twice. Since it results in a 180° turn a explicit turn 
-        direction isn't nescessary, two times CW and two times CCW doing the same.
-
-        The uppercase symbols are the official notation, lower case have different meanings
-        in other puzzles.
-    */
     public delegate void ProcessSymbol(string symbol);
     public delegate void CommandExecutor(CommandContext context);
 
@@ -53,7 +38,7 @@ public class CubeScript
     }
 
     private void EnqueueCommandContext(CommandContext context) {
-        
+        // default command complete handler
     }
 
     void InvokeHandler()
@@ -105,6 +90,10 @@ public class CubeScript
 
     void OnDirectionSymbol(string symbol)
     {
+        if (m_CommandContext.Plane == null) {
+            Debug.Log("Direction Symbol without preceeding plane found.");
+            return;
+        }
         m_CommandContext.RotationDirection = Direction.CCW;
     }
 
@@ -139,6 +128,7 @@ public class CubeScript
         public Vector3 Plane;
         public Direction RotationDirection = Direction.CW;
         public bool IsExecutedTwice;
+        // POLYMORPHISM
         public override string ToString()
         {
             return $"CommandContext: Plane = {Plane}; RotationDirection = {RotationDirection.ToString()}; IsExecutedTwice = {IsExecutedTwice}";
