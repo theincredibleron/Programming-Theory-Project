@@ -115,8 +115,13 @@ public class CubeScript
 
     void OnToken(string token)
     {
-        foreach(char c in token.ToCharArray())
+        foreach(char c in token.ToCharArray()) {
+            if (!Parser.ContainsKey(c+"")) {
+                Debug.Log("Unknown char found: \"" + c + "\", token: " + token);
+                return;
+            }
             Parser[c + ""].Invoke(""+ c);
+        }
         Parser["EOT"].Invoke(token);
         m_CommandContext = new CommandContext();
     }

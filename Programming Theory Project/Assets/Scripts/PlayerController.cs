@@ -1,15 +1,17 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class PlayerController : MonoBehaviour
 {
     [SerializeField] CubeController m_CubeController;
     [SerializeField] float horizontalSpeed, verticalSpeed;
     bool m_AnyKeyDown = false;
-    bool m_ScriptRunning = false;
+    bool m_IsOrientationLocked = false;
     Queue<CubeScript.CommandContext> m_ScriptCommands;
     Dictionary<Vector3, Vector3> m_ControlsOrientation;
+    public InputField ScriptInput;
 
 
     // Start is called before the first frame update
@@ -26,12 +28,14 @@ public class PlayerController : MonoBehaviour
         };
     }
 
-    void Scramble()
+    public void RunScript()
     {
         m_ScriptCommands = new Queue<CubeScript.CommandContext>();
         CubeScript cubeScript = new CubeScript();
         cubeScript.OnCommandComplete += OnCommandComplete;
-        cubeScript.Parse("R2 F2 L' R' D U2 B' D2 B' L2 R B2 R' F' R B2 F' R' B F2 D' L2 R' U' R2 D L D' R2 B R D' B F' R F2 D' B R D B2 F2 L' F' L D L2 R2 D2 B2 D U L2 R' D' F R2 B' R' B2 F2 D B' R2 B2 D2 U' R B F D R' D' U B2 F R B D' U2");
+        ScriptInput.interactable = false;
+        string script = ScriptInput.textComponent.text;
+        cubeScript.Parse(script);
     }
 
     public void OnCommandComplete(CubeScript.CommandContext context)
@@ -41,6 +45,9 @@ public class PlayerController : MonoBehaviour
 
     void LateUpdate()
     {
+        // skip input processing if control is pressed
+        if (Input.GetKey(KeyCode.LeftControl) || ScriptInput.isFocused) return;
+
         float horizontal = Input.GetAxis("Horizontal");
         float vertical = Input.GetAxis("Vertical");
         if (horizontal != 0f || vertical != 0f) {
@@ -54,11 +61,14 @@ public class PlayerController : MonoBehaviour
 
         if (m_CubeController.RotationOngoing) return;
         
-        if (Input.GetKeyDown(KeyCode.Delete)) Scramble();
-
+        // process script command queue
         if(m_ScriptCommands != null && m_ScriptCommands.Count > 0) {
+            m_IsOrientationLocked = true;
             CubeScript.CommandContext context = m_ScriptCommands.Dequeue();
-            m_CubeController.RotatePlane(context.Plane, context.RotationDirection);
+            m_CubeController.RotatePlane(m_ControlsOrientation[context.Plane], context.RotationDirection);
+        } else { // script ended
+            m_IsOrientationLocked = false;
+            ScriptInput.interactable = true;
         }
 
         foreach (KeyValuePair<KeyCode, GameManager.PlaneDescriptor> entry 
@@ -102,6 +112,9 @@ public class PlayerController : MonoBehaviour
 
     void RemapControlsOrientation()
     {
+        // early return, if orientation must not be remapped, e.g. during script excecution
+        if (m_IsOrientationLocked) return;
+
         Vector3 resRight = CheckCloseToReference(Vector3.right, transform.right);
         Vector3 resUp = CheckCloseToReference(Vector3.up, transform.up);
         Vector3 resForward = CheckCloseToReference(Vector3.forward, transform.forward);

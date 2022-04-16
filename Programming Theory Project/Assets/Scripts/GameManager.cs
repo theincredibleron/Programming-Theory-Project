@@ -3,23 +3,38 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using System.Reflection;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
     public Dictionary<KeyCode, PlaneDescriptor> KeyMap;
     public string m_ConfigFilePath;
+    public CubeController cubeController;
 
     void Awake()
     {
         Instance = this;
+        cubeController = GameObject.Find("Cube").GetComponent<CubeController>();
+        cubeController.SaveFile = Application.persistentDataPath + "/save.cube";
         m_ConfigFilePath = Application.persistentDataPath + "/keymap.json";
         KeyMap = new Dictionary<KeyCode, PlaneDescriptor>(12);
         LoadKeymap();
+        cubeController.LoadCube();
     }
 
     void OnApplicationQuit() {
         SaveKeymap();    
+    }
+    public void Quit() {
+        cubeController.PersistCube();    
+#if UNITY_EDITOR        
+        EditorApplication.ExitPlaymode();
+#else
+        Application.Quit();
+#endif
     }
 
     KeyCode ParseKeyCodeString(string toParse) { return (KeyCode)System.Enum.Parse(typeof(KeyCode), toParse); }
