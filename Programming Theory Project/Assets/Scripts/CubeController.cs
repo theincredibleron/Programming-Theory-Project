@@ -11,7 +11,6 @@ public class CubeController : MonoBehaviour
     public string SaveFile;
     void Awake()
     {
-        
         for (int i = 0; i < transform.childCount; i++) {
             Transform childTransform = transform.GetChild(i);
             // continue, if we aren't looking at a plane...
@@ -24,7 +23,7 @@ public class CubeController : MonoBehaviour
             planeScript.ActionFinished += OnActionFinished;
             m_Planes.Add(
                 planeScript.RotationAxis,
-                childTransform.gameObject);
+                planeScript.gameObject);
         }
     }
 

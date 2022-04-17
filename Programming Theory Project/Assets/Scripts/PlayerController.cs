@@ -117,16 +117,23 @@ public class PlayerController : MonoBehaviour
 
     #region viewport to controls mapping
     // ABSTRACTION
-    Vector3 CheckCloseToReference(Vector3 refVector, Vector3 toCheck)
+    Vector3 DiscretizedDirection(Vector3 euler)
     {
-        float dot = Vector3.Dot(refVector, toCheck);
-        return Mathf.Abs(dot) > 0.6f ? refVector * Mathf.RoundToInt(dot) : Vector3.zero; 
+        Vector3 resEuler = new Vector3() {
+                x = Mathf.Clamp(((int)(euler.x + 45) / 90) * 90.0f, 0.0f, 359.0f),
+                y = Mathf.Clamp(((int)(euler.y + 45) / 90) * 90.0f, 0.0f, 359.0f),
+                z = Mathf.Clamp(((int)(euler.z + 45) / 90) * 90.0f, 0.0f, 359.0f)
+            };
+        return resEuler; 
     }
 
     // ABSTRACTION
-    Vector3 GetNonZero(Vector3 toCheck, Vector3 defaultVector)
-    {
-        return toCheck != Vector3.zero ? toCheck : defaultVector;
+    Vector3 CleanupVector(Vector3 input) {
+        return new Vector3(
+            Mathf.RoundToInt(input.x),
+            Mathf.RoundToInt(input.y),
+            Mathf.RoundToInt(input.z)
+        );
     }
 
     // ABSTRACTION
@@ -134,35 +141,13 @@ public class PlayerController : MonoBehaviour
     {
         // early return, if orientation must not be remapped, e.g. during script excecution
         if (m_IsOrientationLocked) return;
+        Vector3 newEuler = DiscretizedDirection(transform.eulerAngles);
+        Quaternion newRot = Quaternion.Euler(newEuler);
 
-        Vector3 resRight = CheckCloseToReference(Vector3.right, transform.right);
-        Vector3 resUp = CheckCloseToReference(Vector3.up, transform.up);
-        Vector3 resForward = CheckCloseToReference(Vector3.forward, transform.forward);
+        Vector3 resRight = CleanupVector((newRot * Vector3.right).normalized);
+        Vector3 resUp = CleanupVector((newRot * Vector3.up));
+        Vector3 resForward = CleanupVector((newRot * Vector3.forward));
 
-        if (resRight != Vector3.zero){
-            if (resUp == Vector3.zero) {
-                resUp = CheckCloseToReference(Vector3.forward, transform.up);
-                resForward = CheckCloseToReference(Vector3.up, transform.forward);
-            }
-        } else if ((resRight = CheckCloseToReference(Vector3.forward, transform.right)) != Vector3.zero){
-            if (resUp == Vector3.zero) {
-                resUp = CheckCloseToReference(Vector3.right, transform.up);
-                resForward = CheckCloseToReference(Vector3.up, transform.forward);
-            } else
-                resForward = CheckCloseToReference(Vector3.right, transform.forward);
-        } else {
-            resRight = CheckCloseToReference(Vector3.up, transform.right); 
-            if (resForward == Vector3.zero) {
-                resForward = CheckCloseToReference(Vector3.right, transform.forward);
-                resUp = CheckCloseToReference(Vector3.forward, transform.up);
-            } else
-                resUp = CheckCloseToReference(Vector3.right, transform.up);
-        }
-        
-        // keep results for right and up only if non zero, otherwise get current mapped vectors
-        resRight = GetNonZero(resRight, m_ControlsOrientation[Vector3.right]);
-        resUp = GetNonZero(resUp, m_ControlsOrientation[Vector3.up]);
-        resForward = GetNonZero(resForward, m_ControlsOrientation[Vector3.forward]);
         // now remap
         m_ControlsOrientation[Vector3.right] = resRight;        
         m_ControlsOrientation[Vector3.left] = -resRight;        
